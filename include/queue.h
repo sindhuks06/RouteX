@@ -6,7 +6,8 @@
 
 #define FLIGHT_ID_LEN 16
 
-typedef struct FlightRecord {
+typedef struct FlightRecord 
+{
     char flightID[FLIGHT_ID_LEN];
     char departure[MAX_CITY_NAME];
     char arrival[MAX_CITY_NAME];
@@ -30,5 +31,10 @@ int enqueue(Queue* q, const FlightRecord* r);
 int dequeue(Queue* q, FlightRecord* out);
 void displayQueue(const Queue* q);
 void freeQueue(Queue* q);
+/* Remove a flight by its ID (e.g., expired or cancelled). Returns 0 on success, -1 if not found. */
+int removeFlightByID(Queue* q, const char* flightID);
+
+/* Display queue entries that depart from a specific city. */
+void displayFlightsByDeparture(const Queue* q, const char* departure);
 
 #endif

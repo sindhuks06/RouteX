@@ -53,3 +53,38 @@ void freeQueue(Queue* q) {
     FlightRecord tmp;
     while (dequeue(q, &tmp) == 0) { /* discard */ }
 }
+
+int removeFlightByID(Queue* q, const char* flightID) {
+    if (!q || !flightID) return -1;
+    QueueNode* cur = q->front;
+    QueueNode* prev = NULL;
+    while (cur) {
+        if (strcmp(cur->data.flightID, flightID) == 0) {
+            if (prev) prev->next = cur->next;
+            else q->front = cur->next;
+            if (cur == q->rear) q->rear = prev;
+            free(cur);
+            q->size--;
+            return 0;
+        }
+        prev = cur;
+        cur = cur->next;
+    }
+    return -1; /* not found */
+}
+
+void displayFlightsByDeparture(const Queue* q, const char* departure) {
+    if (!q || !departure) return;
+    printf("\n--- Flights departing from %s (queue size=%zu) ---\n", departure, q->size);
+    QueueNode* cur = q->front;
+    int any = 0;
+    while (cur) {
+        if (strcmp(cur->data.departure, departure) == 0) {
+            printf("Flight %s: %s -> %s (delay %d)\n",
+                   cur->data.flightID, cur->data.departure, cur->data.arrival, cur->data.delayMinutes);
+            any = 1;
+        }
+        cur = cur->next;
+    }
+    if (!any) printf(" (none)\n");
+}

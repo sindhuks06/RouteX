@@ -5,19 +5,15 @@
 
 #define MAX_CITY_NAME 64
 
-typedef struct Node {
-    int destIndex;
-    struct Node* next;
-} Node;
-
 typedef struct City {
     char name[MAX_CITY_NAME];
-    Node* head;
 } City;
 
 typedef struct Graph {
     City* cities;
     int cityCount;
+    /* adjacency matrix: adj[i][j] == 1 means flight route from i -> j */
+    int** adj;
 } Graph;
 
 /* Graph functions */

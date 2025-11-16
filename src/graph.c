@@ -44,8 +44,22 @@ Graph* createGraphFromFile(const char* filename) {
         if (buffer[0] == '\0') continue;
         strncpy(g->cities[i].name, buffer, MAX_CITY_NAME - 1);
         g->cities[i].name[MAX_CITY_NAME - 1] = '\0';
-        g->cities[i].head = NULL;
         i++;
+    }
+
+    /* allocate adjacency matrix */
+    g->adj = malloc(count * sizeof(int*));
+    if (!g->adj) { free(g->cities); free(g); fclose(fp); return NULL; }
+    for (int r = 0; r < count; ++r) {
+        g->adj[r] = calloc(count, sizeof(int));
+        if (!g->adj[r]) {
+            for (int k = 0; k < r; ++k) free(g->adj[k]);
+            free(g->adj);
+            free(g->cities);
+            free(g);
+            fclose(fp);
+            return NULL;
+        }
     }
 
     fclose(fp);
@@ -54,13 +68,11 @@ Graph* createGraphFromFile(const char* filename) {
 
 void freeGraph(Graph* g) {
     if (!g) return;
-    for (int i = 0; i < g->cityCount; ++i) {
-        Node* p = g->cities[i].head;
-        while (p) {
-            Node* tmp = p;
-            p = p->next;
-            free(tmp);
+    if (g->adj) {
+        for (int i = 0; i < g->cityCount; ++i) {
+            free(g->adj[i]);
         }
+        free(g->adj);
     }
     free(g->cities);
     free(g);
@@ -80,18 +92,8 @@ int addFlightRoute(Graph* g, const char* from, const char* to) {
     int v = findCityIndex(g, to);
     if (u < 0 || v < 0) return -1;
     if (u == v) return -1; // no self-loops
-
-    Node* p = g->cities[u].head;
-    while (p) {
-        if (p->destIndex == v) return -1; // duplicate
-        p = p->next;
-    }
-
-    Node* node = malloc(sizeof(Node));
-    if (!node) return -1;
-    node->destIndex = v;
-    node->next = g->cities[u].head;
-    g->cities[u].head = node;
+    if (g->adj[u][v]) return -1; /* duplicate */
+    g->adj[u][v] = 1;
     return 0;
 }
 
@@ -100,20 +102,9 @@ int removeFlightRoute(Graph* g, const char* from, const char* to) {
     int u = findCityIndex(g, from);
     int v = findCityIndex(g, to);
     if (u < 0 || v < 0) return -1;
-
-    Node* p = g->cities[u].head;
-    Node* prev = NULL;
-    while (p) {
-        if (p->destIndex == v) {
-            if (prev) prev->next = p->next;
-            else g->cities[u].head = p->next;
-            free(p);
-            return 0;
-        }
-        prev = p;
-        p = p->next;
-    }
-    return -1; // not found
+    if (!g->adj[u][v]) return -1;
+    g->adj[u][v] = 0;
+    return 0;
 }
 
 void displayNetwork(const Graph* g) {
@@ -121,13 +112,13 @@ void displayNetwork(const Graph* g) {
     printf("\n--- Flight Network ---\n");
     for (int i = 0; i < g->cityCount; ++i) {
         printf("%s -> ", g->cities[i].name);
-        Node* p = g->cities[i].head;
         int first = 1;
-        while (p) {
-            if (!first) printf(", ");
-            printf("%s", g->cities[p->destIndex].name);
-            first = 0;
-            p = p->next;
+        for (int j = 0; j < g->cityCount; ++j) {
+            if (g->adj[i][j]) {
+                if (!first) printf(", ");
+                printf("%s", g->cities[j].name);
+                first = 0;
+            }
         }
         printf("\n");
     }
@@ -157,16 +148,13 @@ void bfsConnectivity(const Graph* g, const char* start) {
     int any = 0;
     while (head < tail) {
         int u = queue[head++];
-        Node* p = g->cities[u].head;
-        while (p) {
-            int v = p->destIndex;
-            if (!visited[v]) {
+        for (int v = 0; v < n; ++v) {
+            if (g->adj[u][v] && !visited[v]) {
                 visited[v] = 1;
                 queue[tail++] = v;
                 printf(" - %s\n", g->cities[v].name);
                 any = 1;
             }
-            p = p->next;
         }
     }
 
@@ -202,16 +190,13 @@ int findFlightPath(const Graph* g, const char* start, const char* end, int** out
     while (head < tail) {
         int u = queue[head++];
         if (u == t) { found = 1; break; }
-        Node* p = g->cities[u].head;
-        while (p) {
-            int v = p->destIndex;
-            if (!visited[v]) {
+        for (int v = 0; v < n; ++v) {
+            if (g->adj[u][v] && !visited[v]) {
                 visited[v] = 1;
                 parent[v] = u;
                 queue[tail++] = v;
                 if (v == t) { found = 1; break; }
             }
-            p = p->next;
         }
         if (found) break;
     }

@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <inttypes.h>
+#include <stdint.h>
 #include "../include/queue.h"
 
 void initQueue(Queue* q) {
@@ -38,7 +40,8 @@ int dequeue(Queue* q, FlightRecord* out) {
 
 void displayQueue(const Queue* q) {
     if (!q) return;
-    printf("\n--- Flight Record Queue (size=%zu) ---\n", q->size);
+    /* Print queue size portably using PRIu64 */
+    printf("\n--- Flight Record Queue (size=%" PRIu64 ") ---\n", (uint64_t)q->size);
     QueueNode* cur = q->front;
     if (!cur) { printf(" (empty)\n"); return; }
     while (cur) {
@@ -75,7 +78,8 @@ int removeFlightByID(Queue* q, const char* flightID) {
 
 void displayFlightsByDeparture(const Queue* q, const char* departure) {
     if (!q || !departure) return;
-    printf("\n--- Flights departing from %s (queue size=%zu) ---\n", departure, q->size);
+    /* Print queue size portably using PRIu64 */
+    printf("\n--- Flights departing from %s (queue size=%" PRIu64 ") ---\n", departure, (uint64_t)q->size);
     QueueNode* cur = q->front;
     int any = 0;
     while (cur) {

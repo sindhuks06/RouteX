@@ -2,7 +2,7 @@
 
 ## Overview
 Simple Flight Connection Manager in C. Uses:
-- Directed graph (adjacency list with linked lists) to model routes.
+- Directed graph (adjacency matrix) to model routes.
 - Queue for flight records.
 - BFS for connectivity and pathfinding.
 
